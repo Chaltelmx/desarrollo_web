@@ -1,0 +1,47 @@
+<?php
+session_start();
+include_once('../Config/Conexion.php');
+
+if (isset($_POST['Usuario'], $_POST['Clave'])) {
+    function validar($data){
+        $data = trim($data);
+        $data = stripslashes($data);
+        $data = htmlspecialchars($data);
+        return $data;
+    }
+
+    $usuario = validar($_POST['Usuario']);
+    $clave = validar($_POST['Clave']);
+
+    if (empty($usuario) || empty($clave)) {
+        header("Location: https://silviamarcelo.000webhostapp.com/?error=El usuario y la clave son requeridos");
+        exit();
+    } else {
+        $sql = "SELECT * FROM usuarios WHERE NombreUsuario = ?";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bind_param("s", $usuario);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+            $row = $result->fetch_assoc();
+            if (password_verify($clave, $row['Clave'])) {
+                $_SESSION['Usuario'] = $row['NombreUsuario'];
+                $_SESSION['Nombre_Completo'] = $row['NombreCompleto'];
+                $_SESSION['Id'] = $row['Id'];
+                header("Location: ../Inicio.php");
+                exit();
+            } else {
+                header("Location: https://silviamarcelo.000webhostapp.com/?error=La contraseña es incorrecta");
+                exit();
+            }
+        } else {
+            header("Location: https://silviamarcelo.000webhostapp.com/?error=El usuario no existe");
+            exit();
+        }
+    }
+} else {
+    header("Location: https://silviamarcelo.000webhostapp.com/");
+    exit();
+}
+?>
